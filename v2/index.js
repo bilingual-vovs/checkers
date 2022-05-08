@@ -34,8 +34,6 @@ class Desk{
         let color = false
         let step = size/resolution
         this.cells = []
-        let whiteCheckersCount = 0
-        let blackCheckersCount = 0
 
         for (let a = 0; a<resolution;a++){
             for(let b = 0; b<resolution;b++){
@@ -44,7 +42,7 @@ class Desk{
                 this.cells.push({
                     a: a,
                     b: b, 
-                    checker: (color && (b<numOfLines || resolution-numOfLines<=b)) ? this.createChecker(`white-${whiteCheckersCount}`, {a: a,b: b}, step, (b<=numOfLines) ? true:false, this.cells.length): "none"
+                    checker: (color && (b<numOfLines || resolution-numOfLines<=b)) ? this.createChecker((b<=numOfLines) ? `white-${String(a) + b}`:`black-${String(a) + b}`, {a: a,b: b}, step, (b<=numOfLines) ? true:false, this.cells.length): "none"
                 })
 
                 color = (resolution%2==0&&b==7) ? color:!color
