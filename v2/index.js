@@ -204,7 +204,10 @@ class Desk{
         else{
             let cell = this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b:-b) && (checker.color? "white" :"black")  != elem.id.split("-")[0]
             &&
-            !this.checkers.find(elem => elem.position.a == checker.position.a + a*2 && elem.position.b == checker.position.b + (checker.color ? b:-b)*2))
+            !this.checkers.find(elem => elem.position.a == checker.position.a + a*2 && elem.position.b == checker.position.b + (checker.color ? b:-b)*2)
+            && checker.position.a + a*2 < this.resolution && checker.position.a + a*2 >= 0
+            && checker.position.b + (checker.color ? b:-b)*2 < this.resolution && checker.position.b + (checker.color ? b:-b)*2 >= 0
+            )
             if(cell){
                 move.push({
                     a: checker.position.a + a*2,
