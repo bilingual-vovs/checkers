@@ -1,3 +1,4 @@
+
 const patterns = {
     style: `
         *{
@@ -49,6 +50,7 @@ class Desk{
         this.position = position
         this.numOfLines = numOfLines
         this.choosenChecker = null
+        this.thisMove = true
 
         document.body.innerHTML += patterns.desk.backgorund('background-01', size, position, style)
         
@@ -58,6 +60,7 @@ class Desk{
         this.checkers = []
         this.alerts = []
         this.sizeOfCell = step
+        this.hints = []
 
         for (let a = 0; a<resolution;a++){
             for(let b = 0; b<resolution;b++){
@@ -104,14 +107,23 @@ class Desk{
             style: style
         }
     }  
-    createHint({a, b, parent, id}){
+    createHint({a, b, parent, id, atack}){
         document.getElementById(this.cells.find(elem => elem.a == a && elem.b == b).id).innerHTML = patterns.checkers.hint(id, this.sizeOfCell)
         this.checkers.find(elem => elem.id == parent.id).childHints.push(id)
+        this.hints.push({
+            id: id,
+            a: a,
+            b: b,
+            checkerId: parent.id,
+            atack: atack,
+            cellId: this.cells.find(elem => elem.a == a && elem.b == b)
+        })
         return {
             id: id,
             a: a,
             b: b,
             checkerId: parent.id,
+            atack: atack,
             cellId: this.cells.find(elem => elem.a == a && elem.b == b)
         }
     }
@@ -124,18 +136,21 @@ class Desk{
         document.getElementById(id).style.left = String(a*this.sizeOfCell) + "px"
         document.getElementById(id).style.top = String(b*this.sizeOfCell) + "px"
         let checker = this.checkers.find(elem => elem.id == id)
+        checker.childHints.forEach(elemnt =>{
+            this.hints.splice(this.hints.indexOf(this.hints.find(elem => elemnt == elem.id), 1))
+        })
         checker.position ={a: a, b: b}
         let cell = this.cells.find(elem => elem.a == a && elem.b == b)
         this.checkerDeselect(id)
         document.getElementById(id).remove()
         document.getElementById(cell.id).innerHTML = checker.color ? patterns.checkers.white(id, this.sizeOfCell): patterns.checkers.black(id, this.sizeOfCell)
-        console.log(checkerAsset)
         cell.checkerId = checker.id
         this.cells.find(elem => elem.id == checker.cellId).checkerId == "none"
-        
+        this.thisMove = !this.thisMove
     }
     deleteChecker(id){
-
+        document.getElementById(id).remove()
+        this.checkers.splice(this.checkers.indexOf(this.checkers.find(elem=> elem.id == id)), 1)
     }
     checkPosibilityOfMove(checker, a, b){
         let move = false
@@ -166,25 +181,49 @@ class Desk{
                 &&
                 checker.position.b + (checker.color ? b : -b) <this.resolution && checker.position.b + (checker.color ? b : -b)>=0
                 &&
-                this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == b)){
+                !this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b: -b))){
                 move = []
                 move.push({
                     a: checker.position.a + a,
                     b: checker.position.b + (checker.color ? b : -b),
                     points: null,
-                    id: String(a) + b + "-hint",
+                    id: String(checker.position.a + a) + checker.position.b + b + "-hint",
                     parent: checker,
+                    atack: false,
                     functions: [this.moveChecker]
                 })
             }
         }
-        
         return move
     }
-    checkPosibilityOfAtack(checker){
+    checkPosibilityOfAtack(checker, a, b){
+        let move = []
+        if(checker.isLady){
 
+        }
+        else{
+            let cell = this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b:-b) && (checker.color? "white" :"black")  != elem.id.split("-")[0]
+            &&
+            !this.checkers.find(elem => elem.position.a == checker.position.a + a*2 && elem.position.b == checker.position.b + (checker.color ? b:-b)*2))
+            if(cell){
+                move.push({
+                    a: checker.position.a + a*2,
+                    b: checker.position.b + (checker.color ? b : -b)*2,
+                    points: null,
+                    id: String(checker.position.a + a) + checker.position.b + b + "-hint",
+                    parent: checker,
+                    atack: this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b:-b) && (checker.color? "white" :"black") != elem.id.split("-")[0]),
+                    functions: [this.moveChecker]
+                })
+                // let modifiedChecker = checker
+                // modifiedChecker.position.a = checker.position.a + a*2
+                // modifiedChecker.position.b = checker.position.b + (checker.color ? b : -b)*2
+                // let atack =  this.checkPosibilityOfAtack(modifiedChecker)
+            }
+        }
+        return move
     }
-    buildHints(checkerID, func){
+    buildHints(checkerID){
         let checker = this.checkers.find(elem => checkerID == elem.id)
         let posibilities = []
         let moveInA = [1, -1, 1, -1]
@@ -211,11 +250,17 @@ class Desk{
         document.addEventListener('click', this.eventHandler)
     }
     eventHandler(event){
-        if(event.srcElement.id.split("-")[0] == (!this.thisMove ? "white":"black")){
+        if(event.srcElement.id.split("-")[0] == (a.thisMove ? "white":"black")){
             a.onCheckerClick(event.srcElement.id)
         }
-        else if(event.srcElement.id.split("-")[0] == (this.thisMove ? "white":"black")){
+        else if(event.srcElement.id.split("-")[0] == (!a.thisMove ? "white":"black")){
             a.shakeElem("background-01")
+        }
+        else if(event.srcElement.id.split("-")[1] == "hint") {
+            if(a.hints.find(elem => elem.id == event.srcElement.id).atack){
+                a.deleteChecker(a.hints.find(elem => elem.id == event.srcElement.id).atack.id)
+            }
+            a.moveChecker(a.hints.find(elem => elem.id == event.srcElement.id).checkerId, a.hints.find(elem => elem.id == event.srcElement.id).a,a.hints.find(elem => elem.id == event.srcElement.id).b)
         }
         
     }
@@ -258,6 +303,9 @@ class Desk{
         document.getElementById(checkerId).style.animationName = ""
         document.getElementById(checkerId).style.animationDuration = ""
         this.checkers.find(elem => elem.id == checkerId).childHints.forEach(elem => document.getElementById(elem).remove())
+        this.checkers.find(elem => elem.id == checkerId).childHints.forEach(elemnt =>{
+            this.hints.splice(this.hints.indexOf(this.hints.find(elem => elemnt == elem.id), 1))
+        })
         this.checkers.find(elem => elem.id == checkerId).childHints = []
     }
     shakeElem(id){
