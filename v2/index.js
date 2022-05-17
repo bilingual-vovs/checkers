@@ -1,4 +1,3 @@
-
 const patterns = {
     style: `
         *{
@@ -231,16 +230,19 @@ class Desk{
         let posibilities = []
         let moveInA = [1, -1, 1, -1]
         let moveInB = [1, 1, -1, -1]
-        
+        let posibiitiesOfAtack = []
+        let posibilitiesOfMove = []
+
         for (let i = 0; i<4;i++){
-            let posibilityOfMove = i>1 ? false:this.checkPosibilityOfMove(checker, moveInA[i], moveInB[i])
-            let posibilityOfAtack = this.checkPosibilityOfAtack(checker, moveInA[i], moveInB[i])
-            if (posibilityOfMove) {
-                posibilityOfMove.forEach(elem => posibilities.push(elem))
-            }
-            else if(posibilityOfAtack){
-                posibilityOfAtack.forEach(elem => posibilities.push(elem))
-            }
+            posibilitiesOfMove.push(i>1 ? false:this.checkPosibilityOfMove(checker, moveInA[i], moveInB[i])) 
+            posibiitiesOfAtack.push(this.checkPosibilityOfAtack(checker, moveInA[i], moveInB[i]))
+            
+        }
+        if(posibiitiesOfAtack.length){
+            posibilities = posibiitiesOfAtack
+        }
+        else{
+            posibilities= posibilitiesOfMove
         }
             
 

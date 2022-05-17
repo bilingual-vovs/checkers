@@ -1,3 +1,17 @@
+let settings = {
+    resolution: 8,
+    size: 800,
+    position: {x: 100, y: 100},
+    numberOfLines: 3,
+    nameOfWhites: "White",
+    nameOfBlacks: "Black",
+    firstMove: true, //white
+    multiAtack: true, 
+    ladise: true, 
+    backAtack: true,
+    mustAtack: true,
+    visualSetings: {}
+}
 const patterns = {
     style: `
         *{
@@ -17,115 +31,98 @@ const patterns = {
         return `<div id='${id}' style='background-color:red;position:fixed; top:45vh; left:45vw;padding:5vw;box-shadow: 10px 10px 5px brown;border-radius:10px;z-index:200;'>${text}</div>`
     },
     checkers: {
-        white: (id, sizeOfCell, style)=>{
-            return `<img id='${id}' src='./img/whiteChecker.png' style='${(style ? style: '') + `z-index:24;position:absolute;transition-duration:700ms;margin:${sizeOfCell*0.1};width:${sizeOfCell*0.8};height:${sizeOfCell*0.8};`}' >`
+        checker: (id,a,b, sizeOfCell, color, style)=>{
+            return `<img id='${id}' src='./img/${color? "white":"black"}Checker.png' style='${(style ? style: '') + `left: ${a+sizeOfCell*0.1}; top: ${b+sizeOfCell*0.1};z-index:24;position:absolute;transition-duration:700ms;width:${sizeOfCell*0.8};height:${sizeOfCell*0.8};`}' >`
         },
-        black: (id, sizeOfCell, style)=>{
-            return `<img id='${id}' src='./img/blackChecker.png' style='${(style ? style: '') + `z-index:24;position:absolute;transition-duration:700ms;margin:${sizeOfCell*0.1};width:${sizeOfCell*0.8};height:${sizeOfCell*0.8};`}' >`
-        },
-        hint : (id, sizeOfCell, style)=>{
-            return `<img id='${id}' src='./img/hintChecker.png' style='${(style ? style: '') + `z-index:24;position:absolute;transition-duration:700ms;margin:${sizeOfCell*0.2};width:${sizeOfCell*0.6};height:${sizeOfCell*0.6};`}' >`
+        hint : (id, a, b, sizeOfCell, style)=>{
+            return `<img id='${id}' src='./img/hintChecker.png' style='${(style ? style: '') + `left: ${a+0.2*sizeOfCell};top:${b+0.2*sizeOfCell}display:none;z-index:24;position:absolute;transition-duration:700mswidth:${sizeOfCell*0.6};height:${sizeOfCell*0.6};`}' >`
         }
     },
     desk: {
         backgorund: (id, size, position, style)=>{
             return `<div id='${id}' style='${(style ? style: '') + `position:absolute;z-index:22;left:${position.x};top:${position.y};width:${size};height:${size};`}'></div>`
         },
-        whiteCell: (id, size, position, style)=>{
-            return `<div id='${id}' style='${(style ? style: '') + `position:absolute;z-index:22;left:${position.x};top:${position.y};width:${size};height:${size};background-color:white;`}'></div>`
+        cell: (id, size, position, color, style)=>{
+            return `<div id='${id}' style='${(style ? style: '') + `position:absolute;z-index:22;left:${position.x*size}px;top:${position.y*size}px;width:${size};height:${size};background-color:${color? "white": "black"};`}'></div>`
         },
-        blackCell: (id, size, position, style)=>{
-            return `<div id='${id}' style='${(style ? style: '') + `position:absolute;z-index:22;left:${position.x};top:${position.y};width:${size};height:${size};background-color:black;`}'></div>`
-        }
+        
     }
 }
-
-
 
 class Desk{
-    constructor(size, resolution, position, numOfLines, style){
-        this.size = size
-        this.resolution = resolution
-        this.position = position
-        this.numOfLines = numOfLines
-        this.choosenChecker = null
+    constructor(settings, patterns){
+        this.settings = settings
+        this.patterns = patterns
+        this.sizeOfCell = settings.size/settings.resolution
+        this.move = settings.firstMove
 
-        document.body.innerHTML += patterns.desk.backgorund('background-01', size, position, style)
-        
+        this.hints = {
+            get length(){
+                let lenth = 0
+                for(let key in this){
+                    lenth++
+                }
+                return lenth-1
+            }
+        }
+        this.checkers = {
+            get length(){
+                let lenth = 0
+                for(let key in this){
+                    lenth++
+                }
+                return lenth-1
+            }
+        }
+
+        document.body.innerHTML += patterns.desk.backgorund("desk-01", settings.size, settings.position, 'border: solid 10px black;')
+
         let color = false
-        let step = size/resolution
-        this.cells = []
-        this.checkers = []
-        this.alerts = []
-        this.sizeOfCell = step
+        for(let a = 0; a<settings.resolution; a++){
+            for(let b = 0; b<settings.resolution;b++){
+                document.getElementById("desk-01").innerHTML += patterns.desk.cell("c"+a+b, this.sizeOfCell, {x:a,y:b}, color)
 
-        for (let a = 0; a<resolution;a++){
-            for(let b = 0; b<resolution;b++){
-                document.getElementById('background-01').innerHTML += color ? patterns.desk.blackCell(this.cells.length, step, {x: a*step, y: b*step}):patterns.desk.whiteCell(this.cells.length, step, {x: a*step, y: b*step})
-                 
-                if(color && (b<numOfLines || resolution-numOfLines<=b)){
-                    this.checkers.push(this.createChecker((b<=numOfLines) ? `white-${String(a) + b}`:`black-${String(a) + b}`, {a: a,b: b}, step, (b<=numOfLines) ? true:false, this.cells.length))
-                    this.cells.push({
-                        a: a,
-                        b: b,
-                        id: String(this.cells.length),
-                        checkerId: `white-${String(a) + b}`
-                    })
+                if(b<settings.numberOfLines && !color){
+                    this.createChecker(a, b, false)
                 }
-                else{
-                    this.cells.push({
-                        a: a,
-                        b: b,
-                        id: String(this.cells.length),
-                        checkerId: null
-                    })
+                else if(b>=settings.resolution-settings.numberOfLines && !color){
+                    this.createChecker(a, b, true)
                 }
-                color = (resolution%2==0&&b==7) ? color:!color
+                
+                if(b != settings.resolution-1){
+                    color = !color
+                }
+                else if(settings.resolution%2!=0){
+                    color = !color
+                }
             }
         }
-        document.body.innerHTML += `<style>${patterns.style}</style>`
-        for (let key in this) {
-            if (typeof this[key] == 'function') {
-              this[key] = this[key].bind(this);
-            }
-          }
-        
+        this.startGame()
     }
-    createChecker(id, position, sizeOfCell, color, cellId, style){
-        document.getElementById(cellId).innerHTML = color ? patterns.checkers.white(id, sizeOfCell, style):patterns.checkers.black(id, sizeOfCell, style)
-        return {
-            id: id,
-            position: position,
-            cellId: cellId,
-            isLady: false,
-            selected: false, 
-            color: color,
-            childHints: [],
-            style: style
-        }
-    }  
-    createHint({a, b, parent, id}){
-        document.getElementById(this.cells.find(elem => elem.a == a && elem.b == b).id).innerHTML = patterns.checkers.hint(id, this.sizeOfCell)
-        this.checkers.find(elem => elem.id == parent.id).childHints.push(id)
-        return {
-            id: id,
-            a: a,
-            b: b,
-            checkerId: parent.id,
-            cellId: this.cells.find(elem => elem.a == a && elem.b == b)
+    createChecker(a, b, color){
+        document.getElementById("desk-01").innerHTML += this.patterns.checkers.checker("c"+(color? "w":"b")+a+b, a*this.sizeOfCell, b*this.sizeOfCell, this.sizeOfCell, color)
+        
+        this.checkers["c"+(color? "w":"b")+a+b] = {
+            a,
+            b,
+            id: "c"+(color? "w":"b")+a+b,
+            color,
+            hints: [],
+            delete: ()=>{
+                document.getElementById("c"+(color? "w":"b")+a+b).remove()
+                console.log(this.checkers["c"+(color? "w":"b")+a+b])
+                delete this.checkers["c"+(color? "w":"b")+a+b]
+            },
+            move: ()=>{},
+            buildHints: ()=>{
+                document.getElementById("desk-01").innerHTML += this.patterns.checkers.hint("h"+this.checkers.length, this.checkers["c"+(color? "w":"b")+a+b].a, this.checkers["c"+(color? "w":"b")+a+b].b, this.settings.sizeOfCell)
+            },
+            __proto__: this
         }
     }
-
-   
-    alert(text, duration){
-        document.body.innerHTML += patterns.alert("allert-"+this.alerts.length, text)
-        this.alerts.push("allert-"+this.alerts.length)
-        
-        setTimeout(()=>{
-            document.getElementById(this.alerts[0]).remove()
-            this.alerts.splice(0, 1)
-        }, duration)
-    }
-    
+    eventHandler(){}
+    startGame(){}
+    buildHintsGlobal(){}
+    checkWining(){}
 }
-   
+let desk = new Desk(settings, patterns)
