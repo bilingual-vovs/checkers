@@ -181,8 +181,8 @@ class Desk{
                 checker.position.b + (checker.color ? b : -b) <this.resolution && checker.position.b + (checker.color ? b : -b)>=0
                 &&
                 !this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b: -b))){
-                move = []
-                move.push({
+                
+                move ={
                     a: checker.position.a + a,
                     b: checker.position.b + (checker.color ? b : -b),
                     points: null,
@@ -190,13 +190,13 @@ class Desk{
                     parent: checker,
                     atack: false,
                     functions: [this.moveChecker]
-                })
+                }
             }
         }
         return move
     }
     checkPosibilityOfAtack(checker, a, b){
-        let move = []
+        let move = false
         if(checker.isLady){
 
         }
@@ -208,7 +208,7 @@ class Desk{
             && checker.position.b + (checker.color ? b:-b)*2 < this.resolution && checker.position.b + (checker.color ? b:-b)*2 >= 0
             )
             if(cell){
-                move.push({
+                move ={
                     a: checker.position.a + a*2,
                     b: checker.position.b + (checker.color ? b : -b)*2,
                     points: null,
@@ -216,7 +216,7 @@ class Desk{
                     parent: checker,
                     atack: this.checkers.find(elem => elem.position.a == checker.position.a + a && elem.position.b == checker.position.b + (checker.color ? b:-b) && (checker.color? "white" :"black") != elem.id.split("-")[0]),
                     functions: [this.moveChecker]
-                })
+                }
                 // let modifiedChecker = checker
                 // modifiedChecker.position.a = checker.position.a + a*2
                 // modifiedChecker.position.b = checker.position.b + (checker.color ? b : -b)*2
@@ -232,10 +232,12 @@ class Desk{
         let moveInB = [1, 1, -1, -1]
         let posibiitiesOfAtack = []
         let posibilitiesOfMove = []
+        let x
 
         for (let i = 0; i<4;i++){
             posibilitiesOfMove.push(i>1 ? false:this.checkPosibilityOfMove(checker, moveInA[i], moveInB[i])) 
-            posibiitiesOfAtack.push(this.checkPosibilityOfAtack(checker, moveInA[i], moveInB[i]))
+            x = this.checkPosibilityOfAtack(checker, moveInA[i], moveInB[i])
+            if(x) posibiitiesOfAtack.push(x)
             
         }
         if(posibiitiesOfAtack.length){
@@ -245,9 +247,9 @@ class Desk{
             posibilities= posibilitiesOfMove
         }
             
-
+        console.log(posibilities)
         posibilities.forEach(elem => {
-            this.createHint(elem)
+            if (elem) this.createHint(elem)
         })
     }
     startGame(){
